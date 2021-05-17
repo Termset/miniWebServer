@@ -72,12 +72,12 @@ public:
     bool front(T &value)
     {
         m_mutex.lock();
-        if (0 == m_size)
+        if (0 == m_size)//队列已空
         {
             m_mutex.unlock();
             return false;
         }
-        value = m_array[m_front];
+        value = m_array[m_front];//取出队首
         m_mutex.unlock();
         return true;
     }
@@ -85,7 +85,7 @@ public:
     bool back(T &value)
     {
         m_mutex.lock();
-        if (0 == m_size)
+        if (0 == m_size)//队列已空
         {
             m_mutex.unlock();
             return false;

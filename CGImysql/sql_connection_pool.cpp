@@ -23,7 +23,7 @@ connection_pool *connection_pool::GetInstance()
     return &connPool;
 }
 
-//构造初始化
+//构造初始化 url、user、密码、数据库名字、端口、最大连接数、日志开关
 void connection_pool::init(string url, string User, string PassWord, string DBName, int Port, int MaxConn, int close_log)
 {
     m_url = url;
@@ -33,10 +33,11 @@ void connection_pool::init(string url, string User, string PassWord, string DBNa
     m_DatabaseName = DBName;
     m_close_log = close_log; //日志开关
 
+    //创建MaxConn个空闲连接，加入到connList中，存储的是连接的指针
     for (int i = 0; i < MaxConn; i++)
     {
-        MYSQL *con = NULL;
-        con = mysql_init(con);
+        MYSQL *con = NULL;//创建数据库空指针
+        con = mysql_init(con);//初始化连接
 
         if (con == NULL)
         {
@@ -63,7 +64,7 @@ void connection_pool::init(string url, string User, string PassWord, string DBNa
 //当有请求时，从数据库连接池中返回一个可用连接，更新使用和空闲连接数
 MYSQL *connection_pool::GetConnection()
 {
-    MYSQL *con = NULL;
+    MYSQL *con = NULL;//数据库类型的空指针
 
     if (0 == connList.size())
         return NULL;
@@ -72,7 +73,7 @@ MYSQL *connection_pool::GetConnection()
 
     lock.lock();
 
-    con = connList.front();
+    con = connList.front();//取出队列头
     connList.pop_front();
 
     --m_FreeConn;
@@ -111,7 +112,7 @@ void connection_pool::DestroyPool()
         for (it = connList.begin(); it != connList.end(); ++it)
         {
             MYSQL *con = *it;
-            mysql_close(con);
+            mysql_close(con);//遍历逐个关闭close
         }
         m_CurConn = 0;
         m_FreeConn = 0;
@@ -127,6 +128,7 @@ int connection_pool::GetFreeConn()
     return this->m_FreeConn;
 }
 
+//类外定义析构函数，销毁连接池
 connection_pool::~connection_pool()
 {
     DestroyPool();

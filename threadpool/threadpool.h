@@ -20,7 +20,7 @@ public:
     bool append_p(T *request);
 
 private:
-    /*工作线程运行的函数，它不断从工作队列中取出任务并执行之*/
+    /*工作线程运行的函数，它不断从工作队列中取出任务并执行*/
     static void *worker(void *arg);
     void run();
 
@@ -42,7 +42,7 @@ threadpool<T>::threadpool( int actor_model, connection_pool *connPool, int threa
     m_threads = new pthread_t[m_thread_number]; //创建线程组
     if (!m_threads)
         throw std::exception();
-    for (int i = 0; i < thread_number; ++i)
+    for (int i = 0; i < thread_number; ++i)//逐个创建线程
     {
         if (pthread_create(m_threads + i, NULL, worker, this) != 0)
         {
@@ -109,12 +109,14 @@ void threadpool<T>::run()
             m_queuelocker.unlock();
             continue;
         }
+        //从请求队列中取出第一个任务
+        //将任务从请求队列删除
         T *request = m_workqueue.front();
         m_workqueue.pop_front();
         m_queuelocker.unlock();
         if (!request)
             continue;
-        if (1 == m_actor_model)
+        if (1 == m_actor_model)//触发模式
         {
             if (0 == request->m_state)
             {

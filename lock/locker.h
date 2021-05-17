@@ -5,33 +5,36 @@
 #include <pthread.h>
 #include <semaphore.h>
 
+//信号量
 class sem
 {
 public:
-    sem()
+    sem()//无参构造
     {
         if (sem_init(&m_sem, 0, 0) != 0)
         {
             throw std::exception();
         }
     }
-    sem(int num)
+    sem(int num)//有参构造
     {
-        if (sem_init(&m_sem, 0, num) != 0)
+        if (sem_init(&m_sem, 0, num) != 0) //sem_init函数用于初始化一个未命名的信号量
         {
             throw std::exception();
         }
     }
-    ~sem()
+    ~sem()//析构
     {
         sem_destroy(&m_sem);
     }
     bool wait()
     {
+        //sem_wait函数将以原子操作方式将信号量减一,信号量为0时,sem_wait阻塞
         return sem_wait(&m_sem) == 0;
     }
     bool post()
     {
+        //sem_post函数以原子操作方式将信号量加一,信号量大于0时,唤醒调用sem_post的线程
         return sem_post(&m_sem) == 0;
     }
 
@@ -43,7 +46,7 @@ class locker
 public:
     locker()
     {
-        if (pthread_mutex_init(&m_mutex, NULL) != 0)
+        if (pthread_mutex_init(&m_mutex, NULL) != 0) //pthread_mutex_init函数用于初始化互斥锁
         {
             throw std::exception();
         }
@@ -54,10 +57,12 @@ public:
     }
     bool lock()
     {
+//        函数以原子操作方式给互斥锁加锁
         return pthread_mutex_lock(&m_mutex) == 0;
     }
     bool unlock()
     {
+        //函数以原子操作方式给互斥锁解锁
         return pthread_mutex_unlock(&m_mutex) == 0;
     }
     pthread_mutex_t *get()
@@ -73,6 +78,7 @@ class cond
 public:
     cond()
     {
+        //pthread_cond_init函数用于初始化条件变量
         if (pthread_cond_init(&m_cond, NULL) != 0)
         {
             //pthread_mutex_destroy(&m_mutex);
@@ -87,6 +93,11 @@ public:
     {
         int ret = 0;
         //pthread_mutex_lock(&m_mutex);
+        /*
+         * pthread_cond_wait函数用于等待目标条件变量.该函数调用时需要传入 mutex参数(加锁的互斥锁) ,
+         * 函数执行时,先把调用线程放入条件变量的请求队列,然后将互斥锁mutex解锁,当函数成功返回为0时,
+         * 互斥锁会再次被锁上. 也就是说函数内部会有一次解锁和加锁操作.
+         */
         ret = pthread_cond_wait(&m_cond, m_mutex);
         //pthread_mutex_unlock(&m_mutex);
         return ret == 0;
@@ -105,6 +116,7 @@ public:
     }
     bool broadcast()
     {
+        //pthread_cond_broadcast函数以广播的方式唤醒所有等待目标条件变量的线程
         return pthread_cond_broadcast(&m_cond) == 0;
     }
 
